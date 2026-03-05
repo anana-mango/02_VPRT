@@ -1,3 +1,19 @@
+chat:
+    def chat(self, messages):
+        payload = {"model": self.model, "stream": False, "messages": messages}  # 7
+        r = self.session.post(f"{self.base_url}/api/chat", json=payload, timeout=self.timeout_sec)
+        r.raise_for_status()
+        data = r.json()
+        
+        msg = data.get("message", {})
+        content = msg.get("content")
+        
+        if not isinstance(content, str):
+            raise RuntimeError(f"Unexpected response: {data}")
+        return content
+
+
+error message:
 Assistant> JSON 파싱 실패. 모델 출력:
 ```json
 {
@@ -8,3 +24,6 @@ Assistant> JSON 파싱 실패. 모델 출력:
 }
 ```
 Error: 'list' object has no attribute 'strip'
+
+
+
