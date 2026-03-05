@@ -1,20 +1,10 @@
-* Uses proxy env variable http_proxy == 'http://168.219.61.252:8080'
-*   Trying 168.219.61.252:8080...
-* Established connection to 168.219.61.252 (168.219.61.252 port 8080) from 10.246.241.102 port 52853
-* using HTTP/1.x
-> GET http://127.0.0.1:11434/api/tags HTTP/1.1
-> Host: 127.0.0.1:11434
-> User-Agent: curl/8.16.0
-> Accept: */*
-> Proxy-Connection: Keep-Alive
->
-* Request completely sent off
-< HTTP/1.1 301 Moved Permanently
-< Server: BlueCoat-Security-Appliance
-< Location:http://10.246.241.102
-< Connection: Close
-<
-<HTML>
-<HEAD><TITLE>Redirection</TITLE></HEAD>
-<BODY><H1>Redirect</H1></BODY>
-* shutting down connection #0
+Assistant> JSON 파싱 실패. 모델 출력:
+```json
+{
+  "sql": "SELECT p.payload_id, p.name, p.value_text FROM payload_item p WHERE p.payload_id IN (SELECT pi.payload_id FROM ckv_param pi WHERE pi.ckv_hash IN ('079c1d75b379e0939decf3668513eb659cfce99f', 'f1b3e01485d4cebbe672e724f5fe485a0b1778cd')) GROUP BY p.payload_id, p.name, p.value_text HAVING COUNT(DISTINCT p.value_text) > 1 LIMIT 50;",
+  "assumptions": [
+    "The 'name' column in 'payload_item' table is used to group the payload items."
+  ]
+}
+```
+Error: 'list' object has no attribute 'strip'
