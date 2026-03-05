@@ -1,0 +1,20 @@
+* Uses proxy env variable http_proxy == 'http://168.219.61.252:8080'
+*   Trying 168.219.61.252:8080...
+* Established connection to 168.219.61.252 (168.219.61.252 port 8080) from 10.246.241.102 port 52853
+* using HTTP/1.x
+> GET http://127.0.0.1:11434/api/tags HTTP/1.1
+> Host: 127.0.0.1:11434
+> User-Agent: curl/8.16.0
+> Accept: */*
+> Proxy-Connection: Keep-Alive
+>
+* Request completely sent off
+< HTTP/1.1 301 Moved Permanently
+< Server: BlueCoat-Security-Appliance
+< Location:http://10.246.241.102
+< Connection: Close
+<
+<HTML>
+<HEAD><TITLE>Redirection</TITLE></HEAD>
+<BODY><H1>Redirect</H1></BODY>
+* shutting down connection #0
