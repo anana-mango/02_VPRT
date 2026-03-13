@@ -159,7 +159,7 @@ def save_rag_docs(project_root: Path, rag_dir_name: str, docs: List[Dict[str, st
 class SchemaRAG:
     docs: List[Dict[str, str]]
     vectorizer: TfidfVectorizer
-    mat
+    mat: object
 
     @classmethod
     def build(cls, docs: List[Dict[str, str]]) -> "SchemaRAG":
