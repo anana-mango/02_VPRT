@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Optional
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text as sql_text
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -41,13 +41,29 @@ def _sqlite_url(abs_path: Path) -> str:
     return f"sqlite:///{abs_path.as_posix()}"
 
 
+def _get_sqlite_view_definition(engine, view_name: str) -> Optional[str]:
+    query = sql_text("""
+        SELECT sql
+        FROM sqlite_master
+        WHERE type = 'view' AND name = :view_name
+    """)
+    with engine.connect() as conn:
+        row = conn.execute(query, {"view_name": view_name}).fetchone()
+    return row[0] if row and row[0] else None
+
+
 def extract_schema_docs_sqlite(db_path: Path) -> List[Dict[str, str]]:
     engine = create_engine(_sqlite_url(db_path.resolve()))
     insp = inspect(engine)
 
-    table_names = insp.get_table_names()
+    table_names = sorted(insp.get_table_names())
+    view_names = sorted(insp.get_view_names())
+
     docs: List[Dict[str, str]] = []
 
+    # -------------------------
+    # TABLE 문서화 (기존 로직 유지)
+    # -------------------------
     for t in table_names:
         cols = insp.get_columns(t)
         pk = insp.get_pk_constraint(t) or {}
@@ -92,6 +108,28 @@ def extract_schema_docs_sqlite(db_path: Path) -> List[Dict[str, str]]:
             f"COLUMNS:\n{chr(10).join(col_lines)}\n"
         )
         docs.append({"id": f"table::{t}", "text": text})
+
+    # -------------------------
+    # VIEW 문서화 (추가)
+    # -------------------------
+    for v in view_names:
+        cols = insp.get_columns(v)
+        view_sql = _get_sqlite_view_definition(engine, v)
+
+        col_lines = []
+        for c in cols:
+            col_lines.append(
+                f"- {c['name']} {str(c.get('type'))}"
+                + (" NOT NULL" if not c.get("nullable", True) else "")
+                + (f" DEFAULT {c.get('default')}" if c.get("default") is not None else "")
+            )
+
+        text = (
+            f"VIEW: {v}\n"
+            f"DEFINITION:\n{view_sql or '(definition unavailable)'}\n"
+            f"COLUMNS:\n{chr(10).join(col_lines)}\n"
+        )
+        docs.append({"id": f"view::{v}", "text": text})
 
     return docs
 
@@ -141,7 +179,7 @@ def load_or_build_schema_rag(project_root: Path, db_file: Optional[str], rag_dir
     db_path = _find_sqlite_db(project_root, db_file)
     docs = extract_schema_docs_sqlite(db_path)
     if not docs:
-        raise RuntimeError("테이블을 찾지 못했습니다. DB가 비어있거나 파일이 잘못되었을 수 있습니다.")
+        raise RuntimeError("테이블/뷰를 찾지 못했습니다. DB가 비어있거나 파일이 잘못되었을 수 있습니다.")
     save_rag_docs(project_root, rag_dir_name, docs)
     rag = SchemaRAG.build(docs)
     return db_path, rag, docs
